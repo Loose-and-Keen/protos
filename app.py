@@ -5,7 +5,7 @@ import os
 
 # --- APIサーバーのURLを定義 ---
 # （ローカルで動いてる「頭脳」のアドレスだぜ！）
-API_BASE_URL = "http://127.0.0.1:8888" 
+API_BASE_URL = "https://protos-api.onrender.com"
 
 # --- ページ設定 (変更なし) ---
 st.set_page_config(
