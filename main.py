@@ -43,6 +43,7 @@ app = FastAPI()
 origins = [
     "http://localhost:3000", # Reactアプリ（顔）のアドレス
     "http://localhost",
+    "https://protos-ui.vercel.app"
 ]
 
 app.add_middleware(
