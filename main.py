@@ -1,14 +1,19 @@
-# main.py (FastAPIサーバー)
+# main.py (FastAPIサーバー - 最終版)
 from fastapi import FastAPI
-import db_utils  # 俺たちのDAO (db_utils.py) をそのまま使うぜ！
+from fastapi.middleware.cors import CORSMiddleware # CORS
+import db_utils  # 俺たちのDAO (db_utils.py)
 import google.generativeai as genai
 import os
-
 from pydantic import BaseModel
-from typing import List, Dict, Any
-from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Dict, Any 
 
-# --- Ken（AI）の人格設定（app.pyから持ってくる）---
+# --- Pydanticモデル（JSONの型定義） ---
+class ChatHistory(BaseModel):
+    history: List[Dict[str, Any]] 
+    prompt: str
+    user_id: str = 'ken' 
+
+# --- AIの人格設定（グローバル関数） ---
 def get_system_prompt(chat_ai_name="Ken", logged_in_user_name="ゲスト"):
     return f"""
 あなたは「{chat_ai_name}（AI）」という名のAIアシスタントです。
@@ -35,23 +40,19 @@ try:
 except Exception as e:
     print(f"APIキーの設定エラー: {e}")
 
-# --- FastAPIアプリの起動 ---
+# --- FastAPIアプリの起動 & CORS設定 ---
 app = FastAPI()
 
-# ★★★ 2. CORSミドルウェアを追加 ★★★
-# (これが「:3000（顔）はダチだから通せ！」っていう設定だぜ)
 origins = [
-    "http://localhost:3000", # Reactアプリ（顔）のアドレス
-    "http://localhost",
-    "https://protos-ui.vercel.app"
+    "http://localhost:3000", # ローカル開発用の「顔」
+    "https://protos-ui.vercel.app", # Vercelの本番の「顔」
 ]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # この「住所」からの通信を許可する
+    allow_origins=origins, 
     allow_credentials=True,
-    allow_methods=["*"], # GET, POSTとか全部許可
-    allow_headers=["*"], # 全部許可
+    allow_methods=["*"], 
+    allow_headers=["*"],
 )
 
 # --- APIエンドポイントの定義 ---
@@ -69,13 +70,12 @@ def get_categories_api():
     except Exception as e:
         return {"error": f"カテゴリ取得エラー: {e}"}
 
-# 1.5. プリセット質問一覧を返すAPI
+# ★★★ 1.5. プリセット質問一覧を返すAPI (NEW!) ★★★
 @app.get("/api/v1/categories/{category_id}/questions")
 def get_preset_questions_api(category_id: str):
     try:
-        # DAO (db_utils) を呼ぶだけ！
         questions = db_utils.get_preset_questions(category_id)
-        # [{"preset_question": "...", "knowledge_id": 1}, ...]
+        # JSON形式に変換
         questions_list = [{"preset_question": row['preset_question'], "knowledge_id": row['knowledge_id']} for row in questions]
         return {"preset_questions": questions_list}
     except Exception as e:
@@ -90,17 +90,13 @@ def get_knowledge_response_api(knowledge_id: int, user_id: str = 'ken'):
             return {"ai_response": "おっと、その「型」のデータが見つからなかったわ…ごめんね"}
         
         user_name = db_utils.get_user_name(user_id)
-        chat_ai_name = "Ken" # MVPでは固定
+        chat_ai_name = "Ken" # MVPでは固定 (将来的にはknowledge_idから引く)
         
         knowledge_prompt = f"【RAG材料】ユーザーが「{details[0]['preset_question']}」について知りたがってる。以下の箇条書きナレッジを使って、{chat_ai_name}の経験として自然な会話でアドバイスしてね\n\n"
         knowledge_prompt += f"結論タイトル: {details[0]['success_title']}\n"
         for detail in details:
             knowledge_prompt += f"- ({detail['fact_type']}: {detail['experience_flag']}) {detail['fact_text']}\n"
         
-        print("--- Googleにトスする「RAGプロンプト」の中身 ---")
-        print(knowledge_prompt)
-        print("------------------------------------------")
-
         rag_model = genai.GenerativeModel(
             model_name='models/gemini-flash-latest',
             system_instruction=get_system_prompt(chat_ai_name, user_name)
@@ -111,42 +107,26 @@ def get_knowledge_response_api(knowledge_id: int, user_id: str = 'ken'):
         return {"ai_response": response.text}
         
     except Exception as e:
+        print(f"RAG応答生成エラー: {e}") # ターミナルにもエラー出す
         return {"error": f"RAG応答生成エラー: {e}"}
 
-# --- Pydanticモデル（JSONの型定義）を追加 ---
-# (from fastapi import FastAPI の下に、これもインポートしといてくれ！)
-from pydantic import BaseModel
-from typing import List, Dict
-
-class ChatHistory(BaseModel):
-    # 「history」はリストで、中身は辞書。辞書のキーは文字列で、
-    # 値は「Any（なんでもOK）」にする！ (これで "parts": ["..."] も通る！)
-    history: List[Dict[str, Any]] 
-    prompt: str
-    user_id: str = 'ken'
-
-# 3. 雑談チャットを返すAPI (POSTリクエスト)
+# ★★★ 3. 雑談チャットを返すAPI (実装！) ★★★
 @app.post("/api/v1/chat")
 def handle_chat_api(chat_data: ChatHistory):
     try:
-        # ユーザー名を取得（人格プロンプト用）
         user_name = db_utils.get_user_name(chat_data.user_id)
-        chat_ai_name = "Ken" # MVPでは固定
+        chat_ai_name = "Ken" # MVPでは固定 (将来的にはタブとかから取得)
 
-        # モデルを初期化（雑談用の人格で）
-        # (会話履歴は毎回作り直す)
         chat_model = genai.GenerativeModel(
             model_name='models/gemini-flash-latest',
             system_instruction=get_system_prompt(chat_ai_name, user_name)
         )
         
-        # 履歴をロード
         chat = chat_model.start_chat(history=chat_data.history)
-        
-        # AIに「雑談プロンプト」をトス
         response = chat.send_message(chat_data.prompt)
         
         return {"ai_response": response.text}
         
     except Exception as e:
+        print(f"雑談APIエラー: {e}") # ターミナルにもエラー出す
         return {"error": f"雑談APIエラー: {e}"}
