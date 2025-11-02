@@ -1,0 +1,7 @@
+streamlit
+google-generativeai
+requests
+fastapi
+uvicorn[standard]
+pydantic
+fastapi-cors

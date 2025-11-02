@@ -1,0 +1,21 @@
+knowledge_id,fact_type,fact_text,experience_flag,sort_order
+1,WHY,SwitchBotはカーテンや他デバイスとの拡張性が高い。,POSITIVE,1
+1,WHY,Nature Remoも人気だが、カーテン自動化に非対応なためSwitchBotを推奨。,POSITIVE,2
+1,FAILURE,Nature Remoを先に購入し、カーテン自動化できずSwitchBotに買い直した経験あり（無駄金発生）。,NEGATIVE,3
+1.STEP,メルカリで「Amazon Echo Show (中古)」を探す。(予算: 〜3000円),POSITIVE,4
+1.STEP,メルカリで「SwitchBot Hub Mini (中古)」を探す。(予算: 〜3000円),POSITIVE,5
+1,STEP,SwitchBotアプリでリモコンを登録し、Alexaアプリでスキル連携。,POSITIVE,6
+1,STEP,「アレクサ、テレビつけて！」などで音声操作が可能になる。,POSITIVE,7
+2,WHY,NISA/DCの税制優遇を活用し、手数料最安のS&P500で世界経済の成長に乗るのが合理的。,POSITIVE,1
+2,FAILURE,過去、個別株で一喜一憂したが、インデックス投資の「何もしない」運用が最も効率的と気づいた。,NEGATIVE,2
+2,STEP,「楽天銀行」「楽天証券」「楽天カード」を同時に申し込む。,POSITIVE,3
+2,STEP,楽天カード決済で「eMAXIS Slim 米国株式(S&P500)」をNISA枠で満額積み立てる設定。,POSITIVE,4
+2,STEP,マネーフォワードで資産全体を可視化し、あとは基本的に放置する。,POSITIVE,5
+3,WHY,PMのコア業務は「管理」ではなく、「ブラックボックスの可視化（WBS化）」と「完遂」。,POSITIVE,1
+3,FAILURE,SE時代に顧客要望を言語化（「こういうことっすか？」）し続けた経験がPMスキルの土台になった。,NEGATIVE,2
+3,STEP,『プロジェクトマネジメントの基本がぜんぶわかる本』等の薄い基本書を1冊読む。,POSITIVE,3
+3,STEP,現業務を「WBS（誰が・いつまでに・何を）」に分解する癖をつける。,POSITIVE,4
+4,WHY,通常のマッチングアプリは「アポ取り」の時間が非効率。,POSITIVE,1
+4,WHY,バチェラーデートは「アポ取り」を完全自動化できるため、時間が最短。,POSITIVE,2
+4,STEP,バチェラーデートに登録し、AIのアポ組を待つ。,POSITIVE,3
+4,PRO_TIP,会計は必ず奢る（信頼への投資）。,POSITIVE,4
