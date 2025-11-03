@@ -2,8 +2,8 @@ knowledge_id,fact_type,fact_text,experience_flag,sort_order
 1,WHY,SwitchBotはカーテンや他デバイスとの拡張性が高い。,POSITIVE,1
 1,WHY,Nature Remoも人気だが、カーテン自動化に非対応なためSwitchBotを推奨。,POSITIVE,2
 1,FAILURE,Nature Remoを先に購入し、カーテン自動化できずSwitchBotに買い直した経験あり（無駄金発生）。,NEGATIVE,3
-1.STEP,メルカリで「Amazon Echo Show (中古)」を探す。(予算: 〜3000円),POSITIVE,4
-1.STEP,メルカリで「SwitchBot Hub Mini (中古)」を探す。(予算: 〜3000円),POSITIVE,5
+1,STEP,メルカリで「Amazon Echo Show (中古)」を探す。(予算: 〜3000円),POSITIVE,4
+1,STEP,メルカリで「SwitchBot Hub Mini (中古)」を探す。(予算: 〜3000円),POSITIVE,5
 1,STEP,SwitchBotアプリでリモコンを登録し、Alexaアプリでスキル連携。,POSITIVE,6
 1,STEP,「アレクサ、テレビつけて！」などで音声操作が可能になる。,POSITIVE,7
 2,WHY,NISA/DCの税制優遇を活用し、手数料最安のS&P500で世界経済の成長に乗るのが合理的。,POSITIVE,1
@@ -19,3 +19,12 @@ knowledge_id,fact_type,fact_text,experience_flag,sort_order
 4,WHY,バチェラーデートは「アポ取り」を完全自動化できるため、時間が最短。,POSITIVE,2
 4,STEP,バチェラーデートに登録し、AIのアポ組を待つ。,POSITIVE,3
 4,PRO_TIP,会計は必ず奢る（信頼への投資）。,POSITIVE,4
+4,PRO_TIP,デート後にLINE交換を打診する。,POSITIVE,5
+5,WHY,多段階のスキンケアは「めんどくさい」。重要なのは「保湿」と「強力な成分」のみ。,POSITIVE,1
+5,FAILURE,様々なスキンケアを試したが、シンプルな形に落ち着いた。,NEGATIVE,2
+5,STEP,日常ケア：安い大容量パック＋「いい美容液」（例: オバジC25）＋ニベア青缶（フタ）。,POSITIVE,3
+5,PRO_TIP,髭脱毛（ヤグレーザー推奨、8回程度で効果実感）。,POSITIVE,4
+6,WHY,毎日の服選びは「意思決定コスト」の無駄。,POSITIVE,1
+6,STEP,仕事着：ノンアイロンジャージシャツ（白）と黒スラックスで固定化。アイロン不要、選択不要。,POSITIVE,2
+6,STEP,私服：GUや街中でトレンドを把握し、Sheinの人気ランキング上位を安価に購入。,POSITIVE,3
+6,PRO_TIP,失敗しても安価なため、金銭的・精神的リスクが低い。,POSITIVE,4
