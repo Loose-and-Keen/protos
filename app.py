@@ -1,11 +1,23 @@
-# app.py (Ver 5.0 - API連携バージョン)
+# app.py (Ver 6.0 - 最終分離版)
+# 「db_utils」も「genai」も全部消したぜ！
+
 import streamlit as st
-import requests  # ← DB Utilsの代わりに「requests」をインポート！
+import requests  # 「電話機」だけが友達だ！
 import os
 
 # --- APIサーバーのURLを定義 ---
-# （ローカルで動いてる「頭脳」のアドレスだぜ！）
-API_BASE_URL = "https://protos-api-sgp.onrender.com"
+# (CEOが「-sgp」に直してくれたやつな！)
+API_BASE_URL = "https://protos-api-sgp.onrender.com" 
+
+# --- MVP用 ユーザーID/名前 (ハードコード) ---
+LOGGED_IN_USER_ID = 'ken' 
+try:
+    # ★★★ API経由で「頭脳」からユーザー名を取得！ ★★★
+    # (APIが動いてなかったら、"ゲスト" になる)
+    user_resp = requests.get(f"{API_BASE_URL}/api/v1/users/{LOGGED_IN_USER_ID}")
+    LOGGED_IN_USER_NAME = user_resp.json().get("user_name", "ゲスト(APIエラー)")
+except Exception:
+    LOGGED_IN_USER_NAME = "ゲスト (API接続エラー)"
 
 # --- ページ設定 (変更なし) ---
 st.set_page_config(
@@ -15,26 +27,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- MVP用 ユーザーID/名前 (DBから取る必要がなくなった！) ---
-# （API側が「ken」をデフォルトで知ってるからな）
-LOGGED_IN_USER_ID = 'ken' 
-LOGGED_IN_USER_NAME = "Ken" # MVPでは固定
-
 # --- Streamlit アプリの UI ---
 st.title(f"🤖 {LOGGED_IN_USER_NAME}のスマートライフ Prototype") 
-st.caption("powered by Gemini, FastAPI & Streamlit")
+st.caption("powered by FastAPI (Render) & Streamlit (Cloud)")
 
 # --- 会話履歴を Streamlit のセッション状態で管理 ---
-# (Gemini APIキーやモデル設定は、全部「頭脳（FastAPI）」側に移ったから不要だぜ！)
 if "messages" not in st.session_state:
-    # 最初の挨拶
     st.session_state.messages = [{"role": "assistant", "content": f"よっ、{LOGGED_IN_USER_NAME}！何でも聞いてくれよな！👍"}]
 
 # --- タブのカテゴリを「API」から取得！ ---
 try:
-    # FastAPIの「/api/v1/categories」を叩く！
     response = requests.get(f"{API_BASE_URL}/api/v1/categories")
-    response.raise_for_status() # エラーがあったら例外を発生させる
+    response.raise_for_status() 
     
     categories_data = response.json().get("categories", [])
     category_names = [item['category_name'] for item in categories_data]
@@ -43,7 +47,7 @@ try:
     tabs = st.tabs(category_names)
 
 except Exception as e:
-    st.error(f"「頭脳（API）」からカテゴリの読み込みでエラーが発生したぜ: {e}")
+    st.error(f"「頭脳（API）」からカテゴリの読み込みに失敗したぜ: {e}")
     st.stop()
 
 
@@ -54,35 +58,37 @@ for i, tab in enumerate(tabs):
         category_name = category_names[i]
         
         if category_id != 'general':
-            st.subheader(f"「Ken」の「{category_name}」の型") # 今は全部 'Ken'
+            st.subheader(f"「Ken」の「{category_name}」の型") 
             
             try:
-                # APIからプリセット質問を取得 (これもAPI化が必要だが、MVPではスキップ)
-                # (本当は db_utils.get_preset_questions もAPI化すべきだが、一旦ハードコードするぜ！)
-                # (↑ごめん、Ken！FastAPI側に `get_preset_questions` APIを作るのを忘れてた！)
-                # (↑しょうがない、いったん `db_utils` をこっちでもインポートしてごまかすぜ！笑)
-                
-                # --- 緊急回避（本当はAPIにしたい） ---
-                import db_utils 
-                preset_questions = db_utils.get_preset_questions(category_id)
-                # --- ここまで ---
+                # ★★★「プリセット質問」もAPIから取得！★★★
+                q_response = requests.get(f"{API_BASE_URL}/api/v1/categories/{category_id}/questions")
+                q_response.raise_for_status()
+                preset_questions = q_response.json().get("preset_questions", [])
 
                 if not preset_questions:
                     st.write("（このカテゴリはまだ準備中〜）")
 
-                for question, knowledge_id in preset_questions:
+                for pq in preset_questions:
+                    question = pq['preset_question']
+                    knowledge_id = pq['knowledge_id']
+                    
                     if st.button(question, key=f"{category_id}_{knowledge_id}"):
                         st.session_state.messages.append({"role": "user", "content": question})
                         
                         try:
-                            # ★★★ ここが核心！「頭脳（FastAPI）」のRAG APIを叩く！ ★★★
+                            # ★★★「RAG API」を叩く！★★★
                             rag_response = requests.get(f"{API_BASE_URL}/api/v1/knowledge/{knowledge_id}", params={"user_id": LOGGED_IN_USER_ID})
                             rag_response.raise_for_status()
-                            
-                            response_text = rag_response.json().get("ai_response", "ごめん、AIがエラー吐いたわ…")
+                            response_json = rag_response.json()
+
+                            if "error" in response_json:
+                                response_text = f"頭脳（API）側でエラーだぜ: {response_json['error']}"
+                            else:
+                                response_text = response_json.get("ai_response", "ごめん、AIがエラー吐いたわ…")
                         
                         except Exception as e:
-                            response_text = f"おっと、「頭脳（API）」との通信でエラーだ: {e}"
+                            response_text = f"おっと、「頭脳（RAG API）」との通信でエラーだ: {e}"
 
                         st.session_state.messages.append({"role": "assistant", "content": response_text})
                         st.rerun() 
@@ -100,8 +106,6 @@ with chat_container:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# app.py の一番下の「チャット入力」部分を書き換え
-
 # --- ユーザーからのチャット入力を受け付ける (全タブ共通) ---
 if prompt := st.chat_input(f"{LOGGED_IN_USER_NAME}、メッセージを入力してくれ！"): 
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -109,30 +113,26 @@ if prompt := st.chat_input(f"{LOGGED_IN_USER_NAME}、メッセージを入力し
         st.markdown(prompt)
 
     try:
-        # ★★★ ここが核心！「頭脳（FastAPI）」の「/api/v1/chat」を叩く！ ★★★
-        
-        # 1. AIに渡す「会話履歴」を整形
-        # (Gemini APIの "parts" 形式に合わせるのがちと面倒だぜ！)
+        # ★★★「雑談API」を叩く！★★★
         history_for_api = []
-        for msg in st.session_state.messages[:-1]: # 最後の（今送った）メッセージは除く
+        for msg in st.session_state.messages[:-1]: 
             role = "model" if msg["role"] == "assistant" else msg["role"]
-            history_for_api.append({
-                "role": role,
-                "parts": [msg["content"]]
-            })
+            history_for_api.append({"role": role, "parts": [msg["content"]]})
 
-        # 2. APIに送るデータ（JSON）
         chat_payload = {
             "history": history_for_api,
             "prompt": prompt,
             "user_id": LOGGED_IN_USER_ID
         }
 
-        # 3. 「頭脳（FastAPI）」にPOSTリクエスト！
         chat_response = requests.post(f"{API_BASE_URL}/api/v1/chat", json=chat_payload)
-        chat_response.raise_for_status() # エラーチェック
+        chat_response.raise_for_status() 
 
-        response_text = chat_response.json().get("ai_response", "ごめん、AIがエラー吐いたわ…")
+        response_json = chat_response.json()
+        if "error" in response_json:
+            response_text = f"頭脳（API）側でエラーだぜ: {response_json['error']}"
+        else:
+            response_text = response_json.get("ai_response", "ごめん、AIがエラー吐いたわ…")
         
         # --- (ここから下は変更なし) ---
         with chat_container.chat_message("assistant"): 
@@ -143,4 +143,4 @@ if prompt := st.chat_input(f"{LOGGED_IN_USER_NAME}、メッセージを入力し
              st.session_state.messages = st.session_state.messages[-50:]
              
     except Exception as e:
-        st.error(f"AI（/api/v1/chat）との通信でエラーが発生しました: {e}")
+        st.error(f"「頭脳（Chat API）」との通信でエラーが発生しました: {e}")

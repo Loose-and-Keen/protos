@@ -46,6 +46,8 @@ app = FastAPI()
 origins = [
     "http://localhost:3000", # ローカル開発用の「顔」
     "https://protos-ui.vercel.app", # Vercelの本番の「顔」
+    "http://localhost:8501",         # Streamlitローカル用
+    "https://prototype-b9n8fm5qngmj7rfgzp9rqd.streamlit.app" # ← Streamlit本番URLを追加！
 ]
 app.add_middleware(
     CORSMiddleware,
