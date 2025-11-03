@@ -63,6 +63,39 @@ app.add_middleware(
 def read_root():
     return {"message": "AI-Ken（Protos）APIへようこそ！"}
 
+@app.get("/api/v1/debug-db-test")
+def debug_db_test_api():
+    """
+    「頭脳（Render）」が「心臓（PostgreSQL）」と本当に接続できてるか、
+    DAOを無視して「直接」テストするぜ！
+    """
+    print("デバッグAPI /api/v1/debug-db-test が叩かれたぜ！")
+    try:
+        # DB接続URLを「頭脳」の環境変数から取得
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            return {"error": "「頭脳」にDATABASE_URLが設定されてないぜ！"}
+
+        # SSLモード（本番）で「心臓」に接続
+        conn = psycopg2.connect(db_url, sslmode='require')
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        
+        print("「心臓（PostgreSQL）」に接続成功！")
+        
+        # 「m_categories」に「魂」が入ってるか、SQLで直接聞く！
+        cursor.execute("SELECT category_id, category_name FROM m_categories ORDER BY sort_order")
+        categories = cursor.fetchall()
+        print(f"「m_categories」から {len(categories)} 件のデータを取得！")
+
+        cursor.close()
+        conn.close()
+        
+        return {"message": "「頭N脳」と「心臓」は完璧に接続できてるぜ！", "category_count": len(categories), "categories": categories}
+        
+    except Exception as e:
+        print(f"デバッグAPIでエラー発生！: {e}")
+        return {"error": f"デバッグAPIでエラー発生！: {e}"}
+    
 # 1. カテゴリ一覧を返すAPI
 @app.get("/api/v1/categories")
 def get_categories_api():
