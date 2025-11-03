@@ -6,6 +6,8 @@ import google.generativeai as genai
 import os
 from pydantic import BaseModel
 from typing import List, Dict, Any 
+import psycopg2 
+import psycopg2.extras
 
 # --- Pydanticモデル（JSONの型定義） ---
 class ChatHistory(BaseModel):
